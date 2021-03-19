@@ -3,23 +3,22 @@ import { TAction } from "./actions";
 import * as types from './types';
 
 export const reducer = (state: IState = initialState, action: TAction): IState => {
-    const { type, payload } = action;
-    switch (type) {
+    switch (action.type) {
         case types.API_REQUEST:
             return {
                 ...state,
-                loading: true
+                isLoading: true
             };
         case types.API_SUCCESS:
             return {
                 ...state,
-                loading: false,
-                data: payload
+                isLoading: false,
+                data: action.payload
             };
         case types.API_ERROR:
             return {
                 ...state,
-                error: payload
+                error: action.payload
             };
         default:
             return state;

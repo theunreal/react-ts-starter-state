@@ -1,12 +1,19 @@
 import React from 'react';
 import './App.css';
-import News from "./news/News";
+import NewModule from "./news/News";
+import Header from "./header/Header";
+import { Container } from "@material-ui/core";
+
 
 function App(): JSX.Element {
 
+    return (
+        <>
+            <Header/>
 
-    return (<>
-            <News/>
+            <Container>
+                <NewModule/>
+            </Container>
         </>
     );
 }

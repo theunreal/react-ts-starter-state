@@ -1,16 +1,16 @@
 import * as types from './types';
 
 export interface IApiRequest {
-    type: types.API_REQUEST
+    type: types.ApiRequest
 }
 
 export interface IApiSuccess {
-    type: types.API_SUCCESS,
+    type: types.ApiSuccess,
     payload: Array<any>;
 }
 
 export interface IApiError {
-    type: types.API_ERROR,
+    type: types.ApiError,
     payload: string;
 }
 
@@ -29,4 +29,4 @@ export const apiError = (payload: string): IApiError => ({
     type: types.API_ERROR
 });
 
-export type TAction = IApiRequest & IApiSuccess & IApiError;
+export type TAction = IApiRequest | IApiSuccess | IApiError;

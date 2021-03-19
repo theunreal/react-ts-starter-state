@@ -1,12 +1,12 @@
 export interface IState {
     error: string;
-    loading: boolean;
+    isLoading: boolean;
     data: Array<any>;
 }
 
 const initialState: IState = {
     error: '',
-    loading: false,
+    isLoading: false,
     data: []
 };
 
