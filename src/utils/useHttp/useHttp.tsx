@@ -15,7 +15,8 @@ const fetchReducer = (state: IState = initialState, action: TAction) => {
             return {
                 ...state,
                 data: action.payload,
-                isLoading: false
+                isLoading: false,
+                error: ''
             };
         case 'API_ERROR':
             console.error(`Triggered: ${API_ERROR}, message: ${action.payload}`);
@@ -42,6 +43,7 @@ export const useHttp = (url: string) => {
             if (cancelRequest) return;
             dispatch({ type: 'API_SUCCESS', payload: response.data });
         } catch (e) {
+            console.log("Got error", e);
             dispatch({ type: 'API_ERROR', payload: e.message });
         }
     };

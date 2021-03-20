@@ -1,9 +1,9 @@
 import * as React from "react";
 import Article from "./Article";
-import {  makeStyles } from "@material-ui/core";
+import { makeStyles } from "@material-ui/core";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Button from "@material-ui/core/Button";
-import { useHttp } from "../../utils/useHttp/useHttp";
+import { useHttp } from "../../../utils/useHttp/useHttp";
 
 const useStyles = makeStyles(() => ({
     articleListHeader: {
@@ -23,16 +23,23 @@ const useStyles = makeStyles(() => ({
 function ArticleList(): JSX.Element {
     const classes = useStyles();
 
+    /**
+     * Using context
+
+     const newsContext = useContext(NewsContext);
+     const data = newsContext.newsState.articles;
+     */
+
     const { data, error, isLoading, fetchData } = useHttp('news');
 
     if (isLoading) {
-        return <LinearProgress />;
+        return <LinearProgress/>;
     }
 
     if (error) {
         return (<>
-            <h4>Oops.. failed to load article list.</h4>
-            <Button onClick={() => fetchData()}>Retry</Button>
+                <h4>Oops.. failed to load article list.</h4>
+                <Button onClick={() => fetchData()}>Retry</Button>
             </>
         );
     }
