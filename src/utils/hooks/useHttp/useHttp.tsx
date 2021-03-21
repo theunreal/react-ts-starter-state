@@ -1,8 +1,8 @@
 import { useEffect, useReducer, useState } from "react";
-import axios from "../../../config/axios";
+import axios, { axiosInitialOptions } from "../../../config/axios";
 import { TAction } from "./actions";
 import { API_ERROR, API_REQUEST, API_SUCCESS } from "./types";
-import { AxiosPromise } from "axios";
+import { AxiosPromise, AxiosRequestConfig } from "axios";
 
 export interface IState<T> {
     error: string;
@@ -11,7 +11,7 @@ export interface IState<T> {
 }
 
 interface UseHttp<T> extends IState<T> {
-    executeFetch: (url: string) => void;
+    executeFetch: (url: string, options?: AxiosRequestConfig) => void;
 }
 
 const createHttpReducer = <T,>() => (state: IState<T>, action: TAction<T>): IState<T> => {
@@ -42,7 +42,9 @@ const createHttpReducer = <T,>() => (state: IState<T>, action: TAction<T>): ISta
 
 
 export function useHttp<T>(initUrl: string, initData: T): UseHttp<T> {
-    const [url, setUrl] = useState(initUrl);
+    const initOptions: AxiosRequestConfig = { url: initUrl };
+    const [options, setOptions] = useState(initOptions);
+
     const useHttpReducer = createHttpReducer<T>();
     const [state, dispatch] = useReducer(useHttpReducer, {
         isLoading: false,
@@ -54,11 +56,11 @@ export function useHttp<T>(initUrl: string, initData: T): UseHttp<T> {
         let cancelRequest = false;
 
         const fetchData = async (cancelRequest: boolean = false) => {
-            if (!url) return;
+            if (!options.url) return;
 
             dispatch({ type: API_REQUEST});
             try {
-                const responsePromise: AxiosPromise<T> = axios(url);
+                const responsePromise: AxiosPromise<T> = axios(options);
                 const response = await responsePromise;
                 if (cancelRequest) return;
                 dispatch({ type: API_SUCCESS, payload: response.data });
@@ -73,10 +75,11 @@ export function useHttp<T>(initUrl: string, initData: T): UseHttp<T> {
             cancelRequest = true;
         }
 
-    }, [url]);
+    }, [options]);
 
-    const executeFetch = (url: string): void => {
-        setUrl(url);
+    const executeFetch = (url: string, options: AxiosRequestConfig = axiosInitialOptions): void => {
+        options.url = url;
+        setOptions(options);
     };
 
 

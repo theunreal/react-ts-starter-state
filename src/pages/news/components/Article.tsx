@@ -1,7 +1,5 @@
 import * as React from "react";
 import Checkbox from "@material-ui/core/Checkbox";
-import { useContext } from "react";
-import NewsContext from "../NewsContext";
 
 export type IArticle = {
     id: number;
@@ -11,22 +9,14 @@ export type IArticle = {
 }
 type ArticleProps = {
     article: IArticle;
+    handleChange: (article: IArticle, event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-function Article({ article }: ArticleProps): JSX.Element {
+function Article({ article, handleChange }: ArticleProps): JSX.Element {
 
     const { isRead, title, content } = article;
-    const newsContext = useContext(NewsContext);
-
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const article: IArticle = {
-            id: 10,
-            title: 'Test',
-            content: "Wonderer",
-            isRead: false,
-        };
-        newsContext.newsDispatch({ type: 'add_article', payload: article });
+    const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        handleChange(article, event);
     };
 
     return (
@@ -37,7 +27,7 @@ function Article({ article }: ArticleProps): JSX.Element {
 
             <Checkbox
                 checked={isRead}
-                onChange={handleChange}
+                onChange={onChange}
             />
 
 

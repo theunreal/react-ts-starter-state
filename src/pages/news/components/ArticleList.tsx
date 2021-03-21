@@ -4,6 +4,8 @@ import { makeStyles } from "@material-ui/core";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Button from "@material-ui/core/Button";
 import { useHttp } from "../../../utils/hooks/useHttp/useHttp";
+import axios from "axios";
+import { useState } from "react";
 
 const useStyles = makeStyles(() => ({
     articleListHeader: {
@@ -23,13 +25,6 @@ const useStyles = makeStyles(() => ({
 function ArticleList(): JSX.Element {
     const classes = useStyles();
 
-    /**
-     * Using context
-
-     const newsContext = useContext(NewsContext);
-     const data = newsContext.newsState.articles;
-     */
-
     const { data, error, isLoading, executeFetch } = useHttp<IArticle[]>('news', []);
 
     if (isLoading) {
@@ -44,6 +39,10 @@ function ArticleList(): JSX.Element {
         );
     }
 
+    const handleChange = (article: IArticle, event: React.ChangeEvent<HTMLInputElement>) => {
+        // executeFetch(`updateNews?id=${article.id}`, { method: 'post', data: { isRead: event.target.checked }}, setArticles);
+    };
+
     return (
         <>
             <div className={classes.articleListHeader}>
@@ -51,7 +50,7 @@ function ArticleList(): JSX.Element {
                 <small className={classes.headerSubtitle}>{data.length} Articles</small>
             </div>
             <ul>
-                {data.map(article => <Article article={article}/>)}
+                {data.map(article => <Article key={article.id} article={article} handleChange={handleChange}/>)}
             </ul>
         </>
     )
