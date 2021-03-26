@@ -1,20 +1,21 @@
-import { useEffect, useReducer, useState } from "react";
+import { useReducer, useState } from "react";
 import axios, { axiosInitialOptions } from "../../../config/axios";
 import { TAction } from "./actions";
 import { API_ERROR, API_REQUEST, API_SUCCESS } from "./types";
 import { AxiosPromise, AxiosRequestConfig } from "axios";
 
-export interface IState<T> {
+export interface IState {
     error: string;
     isLoading: boolean;
-    data: T;
 }
 
-interface UseHttp<T> extends IState<T> {
-    executeFetch: (url: string, options?: AxiosRequestConfig) => void;
+type TCallBack = (param: any) => any;
+
+interface UseHttp<T> extends IState {
+    executeFetch: (url: string, options?: AxiosRequestConfig, callback?: TCallBack | undefined) => void;
 }
 
-const createHttpReducer = <T,>() => (state: IState<T>, action: TAction<T>): IState<T> => {
+const createHttpReducer = <T, >() => (state: IState, action: TAction<T>): IState => {
     switch (action.type) {
         case API_REQUEST:
             return {
@@ -24,7 +25,6 @@ const createHttpReducer = <T,>() => (state: IState<T>, action: TAction<T>): ISta
         case API_SUCCESS:
             return {
                 ...state,
-                data: action.payload,
                 isLoading: false,
                 error: ''
             };
@@ -41,47 +41,39 @@ const createHttpReducer = <T,>() => (state: IState<T>, action: TAction<T>): ISta
 };
 
 
-export function useHttp<T>(initUrl: string, initData: T): UseHttp<T> {
+export function useHttp<T>(initUrl: string, callback: TCallBack, lazy: boolean = false): UseHttp<T> {
     const initOptions: AxiosRequestConfig = { url: initUrl };
-    const [options, setOptions] = useState(initOptions);
 
-    const useHttpReducer = createHttpReducer<T>();
+    const useHttpReducer = createHttpReducer();
     const [state, dispatch] = useReducer(useHttpReducer, {
         isLoading: false,
         error: '',
-        data: initData
     });
 
-    useEffect(() => {
-        let cancelRequest = false;
+    const fetchData = async (options: AxiosRequestConfig = initOptions, callback = (data: T) => {}) => {
+        if (!options.url) return;
 
-        const fetchData = async (cancelRequest: boolean = false) => {
-            if (!options.url) return;
-
-            dispatch({ type: API_REQUEST});
-            try {
-                const responsePromise: AxiosPromise<T> = axios(options);
-                const response = await responsePromise;
-                if (cancelRequest) return;
-                dispatch({ type: API_SUCCESS, payload: response.data });
-            } catch (e) {
-                console.log("Got error", e);
-                dispatch({ type: API_ERROR, payload: e.message });
-            }
-        };
-        fetchData(cancelRequest);
-
-        return () => {
-            cancelRequest = true;
+        dispatch({ type: API_REQUEST });
+        try {
+            const responsePromise: AxiosPromise<T> = axios(options);
+            const response = await responsePromise;
+            callback(response.data);
+            dispatch({ type: API_SUCCESS, payload: response.data });
+        } catch (e) {
+            console.log("Got error", e);
+            dispatch({ type: API_ERROR, payload: e.message });
         }
+    };
 
-    }, [options]);
+    if (!lazy) {
+        fetchData();
+    }
 
-    const executeFetch = (url: string, options: AxiosRequestConfig = axiosInitialOptions): void => {
+    const executeFetch = (url: string, options: AxiosRequestConfig = axiosInitialOptions, callback: TCallBack | undefined): void => {
         options.url = url;
-        setOptions(options);
+        fetchData(options, callback)
     };
 
 
-    return { ...state, executeFetch}
+    return { ...state, executeFetch }
 }

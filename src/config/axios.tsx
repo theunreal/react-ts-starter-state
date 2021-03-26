@@ -6,10 +6,10 @@ export const axiosInitialOptions: AxiosRequestConfig = {
 
 const BASE_URL = 'http://localhost:3001';
 
-const instance = axios.create({
+const axiosIntsance = axios.create({
     baseURL: BASE_URL
 });
 
-export default instance;
+export default axiosIntsance;
 
 

@@ -1,11 +1,12 @@
 import * as React from "react";
 import Article, { IArticle } from "./Article";
-import { makeStyles } from "@material-ui/core";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import { makeStyles, SnackbarCloseReason, SnackbarProps } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import { useHttp } from "../../../utils/hooks/useHttp/useHttp";
-import axios from "axios";
+import Snackbar from "@material-ui/core/Snackbar";
+import { useMutation, useQuery } from "react-query";
+import { fetchNews, updateArticle } from "../../newsService";
 import { useState } from "react";
+import { Alert } from "@material-ui/lab";
 
 const useStyles = makeStyles(() => ({
     articleListHeader: {
@@ -25,22 +26,37 @@ const useStyles = makeStyles(() => ({
 function ArticleList(): JSX.Element {
     const classes = useStyles();
 
-    const { data, error, isLoading, executeFetch } = useHttp<IArticle[]>('news', []);
+    const { isError, data, refetch} = useQuery<IArticle[]>('news', fetchNews);
+    const mutation = useMutation((article: IArticle) => {
+        setToastOpen(true);
+        return updateArticle(article);
+    });
+    const [toastOpen, setToastOpen] = useState(false);
 
-    if (isLoading) {
-        return <LinearProgress/>;
-    }
-
-    if (error) {
+    if (isError) {
         return (<>
                 <h4>Oops.. failed to load article list.</h4>
-                <Button onClick={() => executeFetch}>Retry</Button>
-            </>
-        );
+                <Button onClick={() => refetch()}>Retry</Button>
+            </>);
     }
 
-    const handleChange = (article: IArticle, event: React.ChangeEvent<HTMLInputElement>) => {
-        // executeFetch(`updateNews?id=${article.id}`, { method: 'post', data: { isRead: event.target.checked }}, setArticles);
+    if (!data) {
+        return (<>
+            No records found.. Check back later!
+            </>)
+    }
+
+    const handleChange = (article: IArticle, event: React.ChangeEvent<HTMLInputElement>): void => {
+        article.isRead = event.target.checked;
+        mutation.mutate(article);
+    };
+
+    const handleClose = (event: React.SyntheticEvent<any>, reason: SnackbarCloseReason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setToastOpen(false);
     };
 
     return (
@@ -52,6 +68,12 @@ function ArticleList(): JSX.Element {
             <ul>
                 {data.map(article => <Article key={article.id} article={article} handleChange={handleChange}/>)}
             </ul>
+
+            <Snackbar open={toastOpen} autoHideDuration={2000} onClose={handleClose}>
+                <Alert severity="success">
+                    This is a success message!
+                </Alert>
+            </Snackbar>
         </>
     )
 }

@@ -1,22 +1,23 @@
 import * as React from "react";
-import {  useReducer } from "react";
 import ArticleList from "./components/ArticleList";
-import { initialNewsState, NewsContextProvider, newsReducer } from "./NewsContext";
+import { QueryClient, QueryClientProvider } from "react-query";
+import LinearProgress from "@material-ui/core/LinearProgress/LinearProgress";
+import Box from '@material-ui/core/Box';
 
-function News(): JSX.Element {
+export default function News() {
 
-    const [newsState, newsDispatch] = useReducer(newsReducer, initialNewsState);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, suspense: true } } });
 
-    const newsContextValues = {
-        newsState,
-        newsDispatch
-    };
-
-    return (
-        <NewsContextProvider value={newsContextValues}>
-            <ArticleList/>
-        </NewsContextProvider>
-    );
+    return (<>
+        <QueryClientProvider client={client}>
+            <React.Suspense fallback={
+                <Box m={2}>
+                    <LinearProgress/>
+                    Loading... Be ready!
+                </Box>
+            }>
+                <ArticleList/>
+            </React.Suspense>
+        </QueryClientProvider>
+    </>)
 }
-
-export default News;
