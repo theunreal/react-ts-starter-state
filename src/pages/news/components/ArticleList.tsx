@@ -4,7 +4,7 @@ import { makeStyles, SnackbarCloseReason, SnackbarProps } from "@material-ui/cor
 import Button from "@material-ui/core/Button";
 import Snackbar from "@material-ui/core/Snackbar";
 import { useMutation, useQuery } from "react-query";
-import { fetchNews, updateArticle } from "../../newsService";
+import { fetchNews, updateArticle } from "../newsService";
 import { useState } from "react";
 import { Alert } from "@material-ui/lab";
 
@@ -62,7 +62,7 @@ function ArticleList(): JSX.Element {
     return (
         <>
             <div className={classes.articleListHeader}>
-                <h1>Article List</h1>
+                <h1>Tournament 101 - Final Results</h1>
                 <small className={classes.headerSubtitle}>{data.length} Articles</small>
             </div>
             <ul>

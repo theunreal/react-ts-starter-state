@@ -1,5 +1,5 @@
-import { IArticle } from "./news/components/Article";
-import axiosIntsance from "../config/axios";
+import { IArticle } from "./components/Article";
+import axiosIntsance from "../../config/axios";
 
 export const fetchNews = async(): Promise<IArticle[]> => {
     const response = await axiosIntsance.get<IArticle[]>('news');

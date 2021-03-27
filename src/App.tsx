@@ -1,9 +1,9 @@
 import React from 'react';
 import './App.css';
-import NewModule from "./pages/news/News";
 import Header from "./components/header/Header";
 import { Container } from "@material-ui/core";
 import useWindowSize from "./utils/hooks/useWindowSize";
+import Tournament from "./pages/tournament/Tournament";
 
 
 function App(): JSX.Element {
@@ -17,7 +17,7 @@ function App(): JSX.Element {
             <Header/>
 
             <Container>
-                <NewModule/>
+                <Tournament/>
             </Container>
         </>
     );

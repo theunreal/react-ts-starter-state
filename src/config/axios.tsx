@@ -4,10 +4,8 @@ export const axiosInitialOptions: AxiosRequestConfig = {
     method: 'get'
 };
 
-const BASE_URL = 'http://localhost:3001';
-
 const axiosIntsance = axios.create({
-    baseURL: BASE_URL
+    // baseURL: BASE_URL already in proxy
 });
 
 export default axiosIntsance;
