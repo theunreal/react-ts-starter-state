@@ -1,17 +1,10 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
-import {
-    FormControl,
-    IconButton, Input,
-    LinearProgress,
-    makeStyles,
-    MenuItem,
-    Select,
-    TextField,
-} from "@material-ui/core";
-import { fetchPlayers, playersResponse } from "../tournamentService";
+import { useEffect, useReducer } from "react";
+import { FormControl, IconButton, LinearProgress, makeStyles, MenuItem, Select, TextField, } from "@material-ui/core";
+import { fetchCheaters, fetchPlayers, QueryOptions } from "../tournamentService";
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
+import { initialState, tournamentReducer } from "../tournamentReducer";
 
 const useStyles = makeStyles(() => ({
     playerTable: {
@@ -46,6 +39,9 @@ const useStyles = makeStyles(() => ({
         height: '18px',
         marginTop: '4px',
         marginLeft: '5px',
+    },
+    cheater: {
+        backgroundColor: 'red'
     }
 
 }));
@@ -53,30 +49,30 @@ const useStyles = makeStyles(() => ({
 function PlayerList(): JSX.Element {
     const classes = useStyles();
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [isError, setIsError] = useState(false);
-    const [result, setResult] = useState<playersResponse>();
-
-    // Paging
-    const [page, setPage] = useState(0);
-    const [recordsPerPage, setRecordsPerPage] = useState(10);
-    const [pageRowOptions, setPageRowOptions] = useState([10, 25, 50, 100]);
-
-    // Selected level
-    const [selectedLevel, setSelectedLevel] = useState('');
-    // Free Search
-    const [searchText, setSearchText] = useState('');
+    const [state, dispatch] = useReducer(tournamentReducer, initialState);
+    const { data, isLoading, isError, page, recordsPerPage, pageRowOptions, selectedLevel, searchText, cheaters } = state;
 
     useEffect(() => {
-        setIsLoading(true);
-        fetchPlayers(page, recordsPerPage, selectedLevel, searchText)
+        const queryOptions: QueryOptions = { page, recordsPerPage, selectedLevel, searchText };
+
+        dispatch({ type: 'FETCH_START' });
+        fetchPlayers(queryOptions)
             .then((resultData) => {
-                setResult(resultData)
-                setIsLoading(false);
+                dispatch({ type: 'FETCH_SUCCESS', payload: resultData });
             })
-            .catch((e) => setIsError(true))
+            .catch((e) => {
+                dispatch({ type: 'FETCH_ERROR', payload: e });
+            })
 
     }, [page, recordsPerPage, selectedLevel, searchText]);
+
+    useEffect(() => {
+        const getCheaters = async () => {
+            const cheaters = await fetchCheaters();
+            dispatch({ type: 'FETCH_CHEATERS_SUCCESS', payload: cheaters });
+        };
+        getCheaters();
+    }, []);
 
 
     if (isError) {
@@ -90,15 +86,17 @@ function PlayerList(): JSX.Element {
      * Possible fix: Move the table to another component and move the data check empty to there.
      * Same for pagination.
      */
-    if (!result || !result.data.length) {
+    if (!data || !data.players || data.players.length === 0) {
         return (<>
             No records found.. Check back later!
         </>)
     }
 
 
-    const maxPage = result.total / recordsPerPage;
+    const maxPage = data.total / recordsPerPage;
     const levels = ['amateur', 'rookie', 'pro'];
+
+    console.log(' players', data.players)
 
     return (
         <>
@@ -107,7 +105,9 @@ function PlayerList(): JSX.Element {
             </div>
             {isLoading ? <LinearProgress/> : null}
 
-            <TextField id="standard-basic" label="Standard" onChange={(event => setSearchText(event.target.value))} />
+            <TextField id="standard-basic" label="Standard" onChange={(event => {
+                dispatch({ type: 'DO_SEARCH', payload: event.target.value });
+            })}/>
 
             <table className={classes.playerTable}>
                 <thead>
@@ -122,22 +122,26 @@ function PlayerList(): JSX.Element {
                                 value={selectedLevel}
                                 className={classes.rowsPerPageSelect}
                                 displayEmpty
-                                onChange={event => setSelectedLevel(event.target.value as string)}
+                                onChange={event => {
+                                    dispatch({ type: 'SET_LEVEL', payload: event.target.value })
+                                }}
                             >
                                 <MenuItem value=""><em>All</em></MenuItem>
-                                {levels.map((level) => <MenuItem value={level}>{level}</MenuItem>)}
+                                {levels.map((level) => <MenuItem key={level} value={level}>{level}</MenuItem>)}
                             </Select>
                         </FormControl>
                     </td>
                     <td>Score</td>
                 </tr>
                 </thead>
-                {result.data.map(player => <tr>
-                    <td>{player.id}</td>
-                    <td className={classes.playerName}>{player.name}</td>
-                    <td>{player.level}</td>
-                    <td>{player.score}</td>
-                </tr>)}
+                {data.players.map((player) => {
+                    return (<tr key={player.id} className={player.isCheater ? classes.cheater : ''}>
+                        <td>{player.id}</td>
+                        <td className={classes.playerName}>{player.name}</td>
+                        <td>{player.level}</td>
+                        <td>{player.score}</td>
+                    </tr>)
+                })}
             </table>
             <section className={classes.pagination}>
                 <section>
@@ -149,11 +153,10 @@ function PlayerList(): JSX.Element {
                             value={recordsPerPage}
                             className={classes.rowsPerPageSelect}
                             onChange={(event) => {
-                                setPage(0)
-                                setRecordsPerPage(Number(event.target.value))
+                                dispatch({ type: 'RESET_PAGE', payload: event.target.value })
                             }}
                         >
-                            {pageRowOptions.map((option) => <MenuItem value={option}>{option}</MenuItem>)}
+                            {pageRowOptions.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
                         </Select>
                     </FormControl>
                 </section>
@@ -161,12 +164,16 @@ function PlayerList(): JSX.Element {
                 <section>
                     <IconButton
                         disabled={page === 0}
-                        onClick={() => setPage(page - 1)}>
-                        <NavigateBeforeIcon />
+                        onClick={() => {
+                            dispatch({ type: 'SET_PAGE', payload: page - 1 })}
+                        }>
+                        <NavigateBeforeIcon/>
                     </IconButton>
                     <IconButton
                         disabled={page === maxPage - 1}
-                        onClick={() => setPage(page + 1)}><NavigateNextIcon /></IconButton>
+                        onClick={() => {
+                            dispatch({ type: 'SET_PAGE', payload: page + 1 })
+                        }}><NavigateNextIcon/></IconButton>
                 </section>
             </section>
         </>
