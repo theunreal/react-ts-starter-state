@@ -8,23 +8,23 @@ export type PlayersResponse = {
 
 export type QueryOptions = {
     page: number;
-    recordsPerPage: number;
+    perPage: number;
     selectedLevel: string;
     searchText: string;
 }
 
 const defaultQueryOptions: QueryOptions  = {
     page: 0,
-    recordsPerPage: 10,
+    perPage: 10,
     selectedLevel: '',
     searchText: ''
 }
 
 export const fetchPlayers = async(queryOptions: QueryOptions = defaultQueryOptions, cheaters: number[] = []): Promise<PlayersResponse> => {
-    const { page, recordsPerPage, selectedLevel, searchText } = queryOptions;
+    const { page, perPage, selectedLevel, searchText } = queryOptions;
 
-    const start = page * recordsPerPage;
-    let url = `players?start=${start}&n=${recordsPerPage}`;
+    const start = page * perPage;
+    let url = `players?start=${start}&n=${perPage}`;
     if (selectedLevel) {
         url += `&level=${selectedLevel}`;
     }

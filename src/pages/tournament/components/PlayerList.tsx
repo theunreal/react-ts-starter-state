@@ -1,17 +1,29 @@
 import * as React from "react";
 import { useEffect, useReducer } from "react";
-import { FormControl, IconButton, LinearProgress, makeStyles, MenuItem, Select, TextField, } from "@material-ui/core";
+import { FormControl, LinearProgress, makeStyles, MenuItem, Select, TextField, } from "@material-ui/core";
 import { fetchCheaters, fetchPlayers, QueryOptions } from "../tournamentService";
-import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import { initialState, tournamentReducer } from "../tournamentReducer";
+import { Pagination } from "../../../components/pagination/Pagination";
+import { usePagination } from "../../../components/pagination/paginationReducer";
 
 const useStyles = makeStyles(() => ({
     playerTable: {
         width: '100%',
         backgroundColor: 'white',
+        borderCollapse: 'collapse',
         padding: '10px',
-        boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)'
+        boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
+        "& tr": {
+            "&:hover": {
+                backgroundColor: '#eee',
+            },
+        },
+        "& td": {
+            padding: '6px',
+        },
+    },
+    cheater: {
+        borderLeft: '3px solid red',
     },
     playerName: {
         textTransform: 'uppercase'
@@ -22,16 +34,7 @@ const useStyles = makeStyles(() => ({
         paddingLeft: '1em',
         color: 'grey',
     },
-    pagination: {
-        display: 'flex',
-        marginTop: '10px',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-    },
-    rowsPerPageLabel: {
-        // marginTop: '4px'
-    },
-    rowsPerPageSelect: {
+    smallSelect: {
         outline: 'none',
         border: 'none',
         background: 'none',
@@ -40,9 +43,6 @@ const useStyles = makeStyles(() => ({
         marginTop: '4px',
         marginLeft: '5px',
     },
-    cheater: {
-        backgroundColor: 'red'
-    }
 
 }));
 
@@ -50,10 +50,11 @@ function PlayerList(): JSX.Element {
     const classes = useStyles();
 
     const [state, dispatch] = useReducer(tournamentReducer, initialState);
-    const { data, isLoading, isError, page, recordsPerPage, pageRowOptions, selectedLevel, searchText, cheaters } = state;
+    const { data, isLoading, isError, selectedLevel, searchText } = state;
+    const { page, setPage, perPage, setPerPage } = usePagination();
 
     useEffect(() => {
-        const queryOptions: QueryOptions = { page, recordsPerPage, selectedLevel, searchText };
+        const queryOptions: QueryOptions = { page, perPage, selectedLevel, searchText };
 
         dispatch({ type: 'FETCH_START' });
         fetchPlayers(queryOptions)
@@ -64,7 +65,7 @@ function PlayerList(): JSX.Element {
                 dispatch({ type: 'FETCH_ERROR', payload: e });
             })
 
-    }, [page, recordsPerPage, selectedLevel, searchText]);
+    }, [page, perPage, selectedLevel, searchText]);
 
     useEffect(() => {
         const getCheaters = async () => {
@@ -73,6 +74,13 @@ function PlayerList(): JSX.Element {
         };
         getCheaters();
     }, []);
+
+    const handleChangePage = (updatedValue: number) => {
+        setPage(updatedValue);
+    };
+    const handleChangeRowsPerPage = (updatedValue: number) => {
+        setPerPage(updatedValue)
+    };
 
 
     if (isError) {
@@ -92,11 +100,7 @@ function PlayerList(): JSX.Element {
         </>)
     }
 
-
-    const maxPage = data.total / recordsPerPage;
     const levels = ['amateur', 'rookie', 'pro'];
-
-    console.log(' players', data.players)
 
     return (
         <>
@@ -120,7 +124,7 @@ function PlayerList(): JSX.Element {
                                 labelId="level-search-label"
                                 id="level-search"
                                 value={selectedLevel}
-                                className={classes.rowsPerPageSelect}
+                                className={classes.smallSelect}
                                 displayEmpty
                                 onChange={event => {
                                     dispatch({ type: 'SET_LEVEL', payload: event.target.value })
@@ -134,6 +138,7 @@ function PlayerList(): JSX.Element {
                     <td>Score</td>
                 </tr>
                 </thead>
+                <tbody>
                 {data.players.map((player) => {
                     return (<tr key={player.id} className={player.isCheater ? classes.cheater : ''}>
                         <td>{player.id}</td>
@@ -142,40 +147,16 @@ function PlayerList(): JSX.Element {
                         <td>{player.score}</td>
                     </tr>)
                 })}
+                </tbody>
             </table>
-            <section className={classes.pagination}>
-                <section>
-                    <span className={classes.rowsPerPageLabel}>Rows per page:</span>
-                    <FormControl>
-                        <Select
-                            labelId="rows-per-page-label"
-                            id="rows-select"
-                            value={recordsPerPage}
-                            className={classes.rowsPerPageSelect}
-                            onChange={(event) => {
-                                dispatch({ type: 'RESET_PAGE', payload: event.target.value })
-                            }}
-                        >
-                            {pageRowOptions.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-                </section>
+            <Pagination totalItems={data.total}
+                        onChangePage={handleChangePage}
+                        onChangeRowsPerPage={handleChangeRowsPerPage}
+                        page={page}
+                        perPage={perPage}
 
-                <section>
-                    <IconButton
-                        disabled={page === 0}
-                        onClick={() => {
-                            dispatch({ type: 'SET_PAGE', payload: page - 1 })}
-                        }>
-                        <NavigateBeforeIcon/>
-                    </IconButton>
-                    <IconButton
-                        disabled={page === maxPage - 1}
-                        onClick={() => {
-                            dispatch({ type: 'SET_PAGE', payload: page + 1 })
-                        }}><NavigateNextIcon/></IconButton>
-                </section>
-            </section>
+
+            />
         </>
     );
 }

@@ -10,9 +10,6 @@ interface IState {
     data: PlayersResponse | undefined;
     isLoading: boolean;
     isError: boolean;
-    page: number;
-    recordsPerPage: number;
-    pageRowOptions: number[];
     selectedLevel: string;
     searchText: string;
     cheaters: number[];
@@ -25,9 +22,6 @@ export const initialState: IState = {
         total: 0
     },
     isError: false,
-    page: 0,
-    pageRowOptions: [10, 25, 50, 100],
-    recordsPerPage: 10,
     selectedLevel: '',
     searchText: '',
     cheaters: []
@@ -52,12 +46,11 @@ export const tournamentReducer = (state: IState, action: IAction): IState => {
                 isLoading: true
             };
         case 'FETCH_SUCCESS':
-            const players = state.cheaters.length ? updateCheaters(payload, state.cheaters) : payload;
-            console.log('Fetched players', players);
+            const players = state.cheaters.length ? updateCheaters(payload.players, state.cheaters) : payload.players;
             return {
                 ...state,
                 isLoading: false,
-                data: {...payload, players: players},
+                data: {...payload, players},
                 isError: false
             };
         case 'FETCH_ERROR':
@@ -85,17 +78,6 @@ export const tournamentReducer = (state: IState, action: IAction): IState => {
             return {
                 ...state,
                 selectedLevel: payload
-            };
-        case 'RESET_PAGE':
-            return {
-                ...state,
-                page: 0,
-                recordsPerPage: payload
-            };
-        case 'SET_PAGE':
-            return {
-                ...state,
-                page: payload
             };
         default:
             console.warn("Invalid action: " + type);
