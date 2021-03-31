@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { FormControl, LinearProgress, makeStyles, MenuItem, Select, TextField, } from "@material-ui/core";
 import { fetchCheaters, fetchPlayers, QueryOptions } from "../tournamentService";
 import { initialState, tournamentReducer } from "../tournamentReducer";
@@ -46,15 +46,33 @@ const useStyles = makeStyles(() => ({
 
 }));
 
+const useDebounce = (value: any, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        }
+    }, [value, delay]);
+
+    return debouncedValue;
+};
+
 function PlayerList(): JSX.Element {
     const classes = useStyles();
 
     const [state, dispatch] = useReducer(tournamentReducer, initialState);
     const { data, isLoading, isError, selectedLevel, searchText } = state;
     const { page, setPage, perPage, setPerPage } = usePagination();
+    const debouncedSearchTerm = useDebounce(searchText, 500);
+
 
     useEffect(() => {
-        const queryOptions: QueryOptions = { page, perPage, selectedLevel, searchText };
+        const queryOptions: QueryOptions = { page, perPage, selectedLevel, searchText: debouncedSearchTerm };
 
         dispatch({ type: 'FETCH_START' });
         fetchPlayers(queryOptions)
@@ -64,8 +82,7 @@ function PlayerList(): JSX.Element {
             .catch((e) => {
                 dispatch({ type: 'FETCH_ERROR', payload: e });
             })
-
-    }, [page, perPage, selectedLevel, searchText]);
+    }, [page, perPage, selectedLevel, debouncedSearchTerm]);
 
     useEffect(() => {
         const getCheaters = async () => {
@@ -94,11 +111,7 @@ function PlayerList(): JSX.Element {
      * Possible fix: Move the table to another component and move the data check empty to there.
      * Same for pagination.
      */
-    if (!data || !data.players || data.players.length === 0) {
-        return (<>
-            No records found.. Check back later!
-        </>)
-    }
+    const noRecords = !data || !data.players || data.players.length === 0;
 
     const levels = ['amateur', 'rookie', 'pro'];
 
@@ -113,50 +126,55 @@ function PlayerList(): JSX.Element {
                 dispatch({ type: 'DO_SEARCH', payload: event.target.value });
             })}/>
 
-            <table className={classes.playerTable}>
-                <thead>
-                <tr>
-                    <td>ID</td>
-                    <td>Name</td>
-                    <td>Level
-                        <FormControl>
-                            <Select
-                                labelId="level-search-label"
-                                id="level-search"
-                                value={selectedLevel}
-                                className={classes.smallSelect}
-                                displayEmpty
-                                onChange={event => {
-                                    dispatch({ type: 'SET_LEVEL', payload: event.target.value })
-                                }}
-                            >
-                                <MenuItem value=""><em>All</em></MenuItem>
-                                {levels.map((level) => <MenuItem key={level} value={level}>{level}</MenuItem>)}
-                            </Select>
-                        </FormControl>
-                    </td>
-                    <td>Score</td>
-                </tr>
-                </thead>
-                <tbody>
-                {data.players.map((player) => {
-                    return (<tr key={player.id} className={player.isCheater ? classes.cheater : ''}>
-                        <td>{player.id}</td>
-                        <td className={classes.playerName}>{player.name}</td>
-                        <td>{player.level}</td>
-                        <td>{player.score}</td>
-                    </tr>)
-                })}
-                </tbody>
-            </table>
-            <Pagination totalItems={data.total}
-                        onChangePage={handleChangePage}
-                        onChangeRowsPerPage={handleChangeRowsPerPage}
-                        page={page}
-                        perPage={perPage}
-
-
-            />
+            {data && data.players && data.players.length > 1 ?
+                <section>
+                    <table className={classes.playerTable}>
+                        <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Name</td>
+                            <td>Level
+                                <FormControl>
+                                    <Select
+                                        labelId="level-search-label"
+                                        id="level-search"
+                                        value={selectedLevel}
+                                        className={classes.smallSelect}
+                                        displayEmpty
+                                        onChange={event => {
+                                            dispatch({ type: 'SET_LEVEL', payload: event.target.value })
+                                        }}
+                                    >
+                                        <MenuItem value=""><em>All</em></MenuItem>
+                                        {levels.map((level) => <MenuItem key={level} value={level}>{level}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
+                            </td>
+                            <td>Score</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {data.players.map((player) => {
+                            return (<tr key={player.id} className={player.isCheater ? classes.cheater : ''}>
+                                <td>{player.id}</td>
+                                <td className={classes.playerName}>{player.name}</td>
+                                <td>{player.level}</td>
+                                <td>{player.score}</td>
+                            </tr>)
+                        })}
+                        </tbody>
+                    </table>
+                    < Pagination totalItems={data.total}
+                                 onChangePage={handleChangePage}
+                                 onChangeRowsPerPage={handleChangeRowsPerPage}
+                                 page={page}
+                                 perPage={perPage}
+                    />
+                </section> :
+                <section>
+                    <h3>No Records Found</h3>
+                </section>
+            }
         </>
     );
 }
