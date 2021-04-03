@@ -5,6 +5,7 @@ import { fetchCheaters, fetchPlayers, QueryOptions } from "../tournamentService"
 import { initialState, tournamentReducer } from "../tournamentReducer";
 import { Pagination } from "../../../components/pagination/Pagination";
 import { usePagination } from "../../../components/pagination/paginationReducer";
+import PlayerRow from "./PlayerRow";
 
 const useStyles = makeStyles(() => ({
     playerTable: {
@@ -21,12 +22,6 @@ const useStyles = makeStyles(() => ({
         "& td": {
             padding: '6px',
         },
-    },
-    cheater: {
-        borderLeft: '3px solid red',
-    },
-    playerName: {
-        textTransform: 'uppercase'
     },
     headerSubtitle: {
         display: 'flex',
@@ -154,21 +149,14 @@ function PlayerList(): JSX.Element {
                         </tr>
                         </thead>
                         <tbody>
-                        {data.players.map((player) => {
-                            return (<tr key={player.id} className={player.isCheater ? classes.cheater : ''}>
-                                <td>{player.id}</td>
-                                <td className={classes.playerName}>{player.name}</td>
-                                <td>{player.level}</td>
-                                <td>{player.score}</td>
-                            </tr>)
-                        })}
+                        {data.players.map((player) => <PlayerRow player={player}/>)}
                         </tbody>
                     </table>
-                    < Pagination totalItems={data.total}
-                                 onChangePage={handleChangePage}
-                                 onChangeRowsPerPage={handleChangeRowsPerPage}
-                                 page={page}
-                                 perPage={perPage}
+                    <Pagination totalItems={data.total}
+                                onChangePage={handleChangePage}
+                                onChangeRowsPerPage={handleChangeRowsPerPage}
+                                page={page}
+                                perPage={perPage}
                     />
                 </section> :
                 <section>
