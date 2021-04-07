@@ -5,7 +5,3 @@ export interface IPlayer {
     id: number;
     isCheater?: boolean;
 }
-
-export interface PlayerMap {
-    [key: string]: IPlayer;
-}
